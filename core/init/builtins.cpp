@@ -401,6 +401,7 @@ int do_mount_all(int nargs, char **args)
     int ret = -1;
     int child_ret = -1;
     int status;
+    char prop[PROP_VALUE_MAX];
     struct fstab *fstab;
 
     if (nargs != 2) {
@@ -430,6 +431,16 @@ int do_mount_all(int nargs, char **args)
     } else if (pid == 0) {
         /* child, call fs_mgr_mount_all() */
         klog_set_level(6);  /* So we can see what fs_mgr_mount_all() does */
+#ifdef ADV_SELECT_FS_DEVICE
+        if (property_get("ro.fs",prop)) {
+            if (!strncmp(prop,"emmc",4))
+                strlcpy(args[1], "/fstab_emmc.freescale", 22);
+            else if (!strncmp(prop,"sata",4))
+                strlcpy(args[1], "/fstab_sata.freescale", 22);
+            else //"ro.boot.fs"="sd"
+                strlcpy(args[1], "/fstab.freescale", 17);
+        }
+#endif
         fstab = fs_mgr_read_fstab(args[1]);
         child_ret = fs_mgr_mount_all(fstab);
         fs_mgr_free_fstab(fstab);

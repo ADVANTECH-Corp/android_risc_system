@@ -809,6 +809,9 @@ static void export_kernel_boot_props() {
         { "ro.boot.hardware",   "ro.hardware",   "unknown", },
         { "ro.boot.revision",   "ro.revision",   "0", },
         { "ro.boot.zygote",     "ro.zygote",     "zygote32", },
+#ifdef ADV_SELECT_FS_DEVICE
+        { "ro.boot.fs", "ro.fs", "sd"},
+#endif
     };
     for (size_t i = 0; i < ARRAY_SIZE(prop_map); i++) {
         char value[PROP_VALUE_MAX];
