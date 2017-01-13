@@ -34,6 +34,16 @@
 #include <sys/wait.h>
 #include <cutils/log.h>
 
+#define CONFIG_UEVENT_PROC
+
+#ifdef CONFIG_UEVENT_PROC
+#include <cutils/properties.h>
+
+#define OFFLINE_OTAPROC
+#define STARTUP_SERVICE
+#define CUSTCFG_UPGRADE
+#endif
+
 using android::base::StringPrintf;
 
 namespace android {
@@ -124,6 +134,21 @@ status_t PublicVolume::doMount() {
     mFuseRead = StringPrintf("/mnt/runtime/read/%s", stableName.c_str());
     mFuseWrite = StringPrintf("/mnt/runtime/write/%s", stableName.c_str());
 
+#ifdef OFFLINE_OTAPROC
+    std::string updatePath(mRawPath + "/OTA/update.zip");
+    int update_trigger = property_get_bool("sys.update.trigger", false);
+#endif
+    
+#ifdef STARTUP_SERVICE
+    std::string startupPath(mRawPath + "/startup/start_up.sh");
+    int startup_trigger = property_get_bool("sys.startup.trigger", false);
+#endif
+    
+#ifdef CUSTCFG_UPGRADE
+    std::string custPath(mRawPath + "/cust/cust_update.zip");
+    int cust_trigger = property_get_bool("sys.cust.trigger", false);
+#endif
+
     setInternalPath(mRawPath);
     if (getMountFlags() & MountFlags::kVisible) {
         setPath(StringPrintf("/storage/%s", stableName.c_str()));
@@ -150,6 +175,64 @@ status_t PublicVolume::doMount() {
         return -EIO;
     }
 
+#ifdef OFFLINE_OTAPROC
+    if (update_trigger == 1) {
+        LOG(VERBOSE) << "[OTAPROC] Another OTA process is on going";
+    } else {
+        LOG(VERBOSE) << "[OTAPROC] Check OTA update package : " << updatePath;
+        
+        if (!access(updatePath.c_str(), F_OK)) {
+            LOG(VERBOSE) << "[OTAPROC] Success";
+
+            property_set("sys.update.storage", stableName.c_str());
+            property_set("sys.update.path", updatePath.c_str());            
+            property_set("sys.update.trigger", "1");
+            goto uevent_handled;
+        } else {
+            LOG(VERBOSE) << "[OTAPROC] Bypass";
+        }
+    }
+#endif
+
+#ifdef STARTUP_SERVICE
+    if (startup_trigger == 1) {
+        LOG(VERBOSE) << "[STARTUP] Another startup process is on going";
+    } else {
+        LOG(VERBOSE) << "[STARTUP] Check startup update package : " << startupPath;
+        
+        if (!access(startupPath.c_str(), F_OK)) {
+            LOG(VERBOSE) << "[STARTUP] Success";
+
+            property_set("sys.startup.path", startupPath.c_str());          
+            property_set("sys.startup.storage", stableName.c_str());
+            property_set("sys.startup.trigger", "1");
+            goto uevent_handled;
+        } else {
+            LOG(VERBOSE) << "[STARTUP] Bypass";
+        }
+    }
+#endif
+
+#ifdef CUSTCFG_UPGRADE
+    if (cust_trigger == 1) {
+        LOG(VERBOSE) << "[CUST] Another cust upgrade process is on going";
+    } else {
+        LOG(VERBOSE) << "[CUST] Check cust upgrade package : " << custPath;
+        
+        if (!access(custPath.c_str(), F_OK)) {
+            LOG(VERBOSE) << "[CUST] Success";
+
+            property_set("sys.cust.path", custPath.c_str());        
+            property_set("sys.cust.storage", stableName.c_str());
+            property_set("sys.cust.trigger", "1");
+            goto uevent_handled;
+        } else {
+            LOG(VERBOSE) << "[CUST] Bypass";
+        }
+    }
+#endif
+
+uevent_handled:
     if (getMountFlags() & MountFlags::kPrimary) {
         initAsecStage();
     }
@@ -225,6 +308,57 @@ status_t PublicVolume::doUnmount() {
     mFuseRead.clear();
     mFuseWrite.clear();
     mRawPath.clear();
+
+#ifdef CONFIG_UEVENT_PROC
+    // Use UUID as stable name, if available
+    std::string stableName = getId();
+
+    if (!mFsUuid.empty()) {
+        stableName = mFsUuid;
+    }
+
+#ifdef OFFLINE_OTAPROC
+    char update_storage[PROPERTY_VALUE_MAX];
+    
+    property_get("sys.update.storage", update_storage, "");
+
+    if (!strcmp(update_storage, stableName.c_str())) {
+        LOG(VERBOSE) << "[OTAPROC] doUnmount, clear update properties";
+        
+        property_set("sys.update.path", "");
+        property_set("sys.update.storage", "");     
+        property_set("sys.update.trigger", "0");        
+    }
+#endif
+
+#ifdef STARTUP_SERVICE
+    char startup_storage[PROPERTY_VALUE_MAX];
+
+    property_get("sys.startup.storage", startup_storage, "");
+
+    if (!strcmp(startup_storage, stableName.c_str())) {
+        LOG(VERBOSE) << "[STARTUP] doUnmount, clear update properties";
+    
+        property_set("sys.startup.path", "");
+        property_set("sys.startup.storage", "");    
+        property_set("sys.startup.trigger", "0");       
+    }
+#endif
+
+#ifdef CUSTCFG_UPGRADE
+    char cust_storage[PROPERTY_VALUE_MAX];
+
+    property_get("sys.cust.storage", cust_storage, "");
+
+    if (!strcmp(cust_storage, stableName.c_str())) {
+        LOG(VERBOSE) << "[CUST] doUnmount, clear update properties";
+    
+        property_set("sys.cust.path", "");
+        property_set("sys.cust.storage", "");   
+        property_set("sys.cust.trigger", "0");      
+    }
+#endif
+#endif //CONFIG_UEVENT_PROC
 
     return OK;
 }
