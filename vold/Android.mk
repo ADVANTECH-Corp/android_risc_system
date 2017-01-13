@@ -99,6 +99,10 @@ common_shared_libraries += libcryptfs_hw
 LOCAL_CFLAGS += -DCONFIG_HW_DISK_ENCRYPTION
 endif
 
+ifeq ($(ADV_SELECT_FS_DEVICE),true)
+LOCAL_CFLAGS += -DADV_SELECT_FS_DEVICE
+endif
+
 LOCAL_SHARED_LIBRARIES := $(common_shared_libraries)
 LOCAL_STATIC_LIBRARIES := $(common_static_libraries)
 
