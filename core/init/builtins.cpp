@@ -437,6 +437,8 @@ int do_mount_all(int nargs, char **args)
                 strlcpy(args[1], "/fstab_emmc.freescale", 22);
             else if (!strncmp(prop,"sata",4))
                 strlcpy(args[1], "/fstab_sata.freescale", 22);
+            else if (!strncmp(prop,"sd2",3))
+                strlcpy(args[1], "/fstab_sd2.freescale", 21);
             else //"ro.boot.fs"="sd"
                 strlcpy(args[1], "/fstab.freescale", 17);
         }
