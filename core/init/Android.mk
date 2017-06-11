@@ -68,6 +68,10 @@ LOCAL_SRC_FILES:= \
     ueventd_parser.cpp \
     watchdogd.cpp \
 
+ifeq ($(ADV_SELECT_FS_DEVICE),true)
+LOCAL_CFLAGS += -DADV_SELECT_FS_DEVICE
+endif
+
 LOCAL_MODULE:= init
 LOCAL_C_INCLUDES += \
     system/extras/ext4_utils \

@@ -533,7 +533,35 @@ static int mount_fstab(const char* fstabfile, int mount_mode) {
     } else if (pid == 0) {
         /* child, call fs_mgr_mount_all() */
         klog_set_level(6);  /* So we can see what fs_mgr_mount_all() does */
-        fstab = fs_mgr_read_fstab(fstabfile);
+
+#ifdef ADV_SELECT_FS_DEVICE
+    char temp[32];
+    std::string propbuf = property_get("ro.fs");
+    std::string propbuf_sd = "/fstab.freescale";
+    std::string propbuf_sd2 = "/fstab_sd2.freescale";
+    std::string propbuf_emmc = "/fstab_emmc.freescale";
+    std::string propbuf_sata = "/fstab_sata.freescale";
+
+    if (!strncmp(propbuf.c_str(), "emmc", 4)){
+        INFO("[ADV] ro.boot.fs =emmc\n");
+        strlcpy(temp, propbuf_emmc.c_str(), 22);
+    }
+    else if (!strncmp(propbuf.c_str(), "sata", 4)){
+        INFO("[ADV] ro.boot.fs =sata\n");
+        strlcpy(temp, propbuf_sata.c_str(), 22);
+     }
+    else if (!strncmp(propbuf.c_str(), "sd2", 3)){
+        INFO("[ADV] ro.boot.fs =sd2\n");
+        strlcpy(temp, propbuf_sd2.c_str(), 21);
+    }
+    else{
+        INFO("[ADV] ro.boot.fs =sd \n");
+        strlcpy(temp, propbuf_sd.c_str(), 17);
+    }
+#endif
+        INFO("[ADV] temp= %s\n",temp);
+	    fstab = fs_mgr_read_fstab(temp);
+      //fstab = fs_mgr_read_fstab(fstabfile);
         child_ret = fs_mgr_mount_all(fstab, mount_mode);
         fs_mgr_free_fstab(fstab);
         if (child_ret == -1) {

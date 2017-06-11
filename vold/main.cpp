@@ -209,6 +209,18 @@ static void coldboot(const char *path) {
 
 static int process_config(VolumeManager *vm) {
     std::string path(android::vold::DefaultFstabPath());
+#ifdef ADV_SELECT_FS_DEVICE
+    char prop[PROP_VALUE_MAX];
+	
+    if (property_get("ro.fs", prop, "")) {
+        if (!strncmp(prop,"emmc",4))
+            fstab = fs_mgr_read_fstab("/fstab_emmc.freescale");
+        else if (!strncmp(prop,"sata",4))
+            fstab = fs_mgr_read_fstab("/fstab_sata.freescale");
+        else //"ro.boot.fs"="sd"
+            fstab = fs_mgr_read_fstab("/fstab.freescale");
+    }
+#else
     fstab = fs_mgr_read_fstab(path.c_str());
     if (!fstab) {
         PLOG(ERROR) << "Failed to open default fstab " << path;
