@@ -222,6 +222,7 @@ static int process_config(VolumeManager *vm) {
     }
 #else
     fstab = fs_mgr_read_fstab(path.c_str());
+#endif
     if (!fstab) {
         PLOG(ERROR) << "Failed to open default fstab " << path;
         return -1;
