@@ -1,0 +1,3 @@
+# advantech_script service
+type advantech_script, domain, domain_deprecated;
+type advantech_script_exec, exec_type, file_type;

@@ -144,5 +144,8 @@ webviewupdate                             u:object_r:webviewupdate_service:s0
 wifip2p                                   u:object_r:wifip2p_service:s0
 wifiscanner                               u:object_r:wifiscanner_service:s0
 wifi                                      u:object_r:wifi_service:s0
+advantech_script			  u:object_r:advantech_script_service:s0
+startup_service                           u:object_r:advantech_script_service:s0
+offline_otaproc                           u:object_r:advantech_script_service:s0
 window                                    u:object_r:window_service:s0
 *                                         u:object_r:default_android_service:s0

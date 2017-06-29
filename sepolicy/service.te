@@ -19,6 +19,9 @@ type radio_service,             service_manager_type;
 type surfaceflinger_service,    service_manager_type;
 type system_app_service,        service_manager_type;
 type update_engine_service,     service_manager_type;
+type advantech_script_service,  service_manager_type;
+type startup_service_service,  service_manager_type;
+type offline_otaproc_service,  service_manager_type;
 
 # system_server_services broken down
 type accessibility_service, app_api_service, system_server_service, service_manager_type;

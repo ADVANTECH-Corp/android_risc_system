@@ -1,0 +1,3 @@
+# startup_service
+type startup_service, domain, domain_deprecated;
+type startup_service_exec, exec_type, file_type;
